@@ -1,12 +1,11 @@
 <?php
 
-use App\Models\VehicleType;
-use App\Models\VehicleColour;
+use App\Models\VehicleMake;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddColoursAndTypesToVehiclesTable extends Migration
+class CreateVehicleMakesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,9 +14,15 @@ class AddColoursAndTypesToVehiclesTable extends Migration
      */
     public function up()
     {
+        Schema::create('vehicle_makes', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
         Schema::table('vehicles', function (Blueprint $table) {
-            $table->foreignIdFor(VehicleType::class, 'type_id');
-            $table->foreignIdFor(VehicleColour::class, 'colour_id');
+            $table->dropColumn('make');
+            $table->foreignIdFor(VehicleMake::class, 'make_id');
         });
     }
 
@@ -28,9 +33,11 @@ class AddColoursAndTypesToVehiclesTable extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('vehicle_makes');
+
         Schema::table('vehicles', function (Blueprint $table) {
-            $table->dropColumn('colour_id');
-            $table->dropColumn('type_id');
+            $table->dropForeign('make_id');
+            $table->string('make');
         });
     }
 }
