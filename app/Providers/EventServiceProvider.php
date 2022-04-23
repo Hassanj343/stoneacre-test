@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Listeners\SendMailForImportCompletion;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use App\Events\ImportCompleted;
+use App\Events\VehicleImportCompleted;
 
 class EventServiceProvider extends ServiceProvider
 {

@@ -22,7 +22,8 @@ class CreateVehiclesTable extends Migration
             $table->string('derivative');
             $table->decimal('price');
             $table->integer('mileage');
-            $table->date('date_on_forecourt');
+            $table->date('date_on_forecourt')->nullable();
+            $table->boolean('is_active')->default(false);
             $table->timestamps();
         });
     }
