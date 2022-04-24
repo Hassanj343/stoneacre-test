@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Vehicle;
-use App\Services\VehicleService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class FordVehicleExport extends Command
 {
@@ -32,11 +32,15 @@ class FordVehicleExport extends Command
         parent::__construct();
     }
 
-    private function getCsvFile()
+    function convertArrayToCsvString(array $fields): ?string
     {
-        $name = sprintf('%s.csv', now()->format('Y-m-d H:i:s'));
-        $this->output->info(sprintf('Writing csv file to: %s', $name));
-        return fopen(storage_path($name), 'w');
+        $f = fopen('php://memory', 'r+');
+        if (fputcsv($f, $fields) === false) {
+            return null;
+        }
+        rewind($f);
+        $csv_line = stream_get_contents($f);
+        return rtrim($csv_line);
     }
 
     /**
@@ -48,7 +52,8 @@ class FordVehicleExport extends Command
     {
         $this->output->title('Starting export');
 
-        $csv = $this->getCsvFile();
+        $path = sprintf('%s.csv', now()->format('Y-m-d H:i:s'));
+        $disk = Storage::disk('ford-export');
 
         $headers = [
             'Registration',
@@ -58,9 +63,10 @@ class FordVehicleExport extends Command
             'Image'
         ];
 
-        fputcsv($csv, $headers);
+        $disk->put($path, $this->convertArrayToCsvString($headers));
 
-        $data = Vehicle::byMake('Ford')
+
+        Vehicle::byMake('Ford')
             ->with('make', 'images')
             ->get()
             ->map(function ($item) {
@@ -77,12 +83,9 @@ class FordVehicleExport extends Command
                     'image' => $item->images->first()->url,
                 ];
             })
-
-            ->each(function ($item) use ($csv) {
-                fputcsv($csv, $item);
+            ->each(function ($item) use ($path, $disk) {
+                $disk->append($path, $this->convertArrayToCsvString($item));
             });
-
-        // push to ftp
 
         $this->output->success('Export successful');
         return 0;
